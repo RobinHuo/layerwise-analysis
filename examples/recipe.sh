@@ -4,7 +4,7 @@ pckg_dir=$3
 save_dir_pth=save
 alignment_data_dir=data_samples/librispeech/alignments
 data_sample=1
-model_name=wav2vec_small
+model_name=fasthubert
 model_type=pretrained
 
 # setting steps to skip the steps previously done 

@@ -111,6 +111,12 @@ class ModelLoader:
         encoder = w2v.Wav2Vec2Model(cfg_cls)
         return encoder, task_cfg
 
+    def fasthubert(self):
+        # run module to register task
+        import fairseq.FastHuBERT.task
+        encoder, task_cfg = self.fairseq_model_loader()
+        return encoder, task_cfg
+
 
 class DataLoader:
     def __init__(
@@ -202,6 +208,10 @@ class DataLoader:
 
     def fastvgs_places(self):
         self.fastvgs()
+
+    def fasthubert(self):
+        in_data = self.fairseq_indata()
+        return in_data
 
 
 class FeatExtractor:
@@ -330,6 +340,9 @@ class FeatExtractor:
         self.stride_sec = 20 / 1000
 
     def randominit(self):
+        self.fairseq_extractor()
+
+    def fasthubert(self):
         self.fairseq_extractor()
 
     def transform_rep(self, kernel_size, stride, layer_rep):

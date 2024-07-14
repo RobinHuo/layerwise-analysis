@@ -55,13 +55,13 @@ fi
 # step 4: Example experiments evaluating property content
 if [ $steps -le 4 ]; then
     echo "going to step 4"
-    echo -e "\n Evaluating MI between model representations and their phone labels"
-    iter_num=0
-    span=phone
-    for layer_num in $(seq 0 12); do
-        echo $layer_num
-        . scripts/get_mi_scores.sh $span $layer_num $iter_num $model_name $data_sample $save_dir_pth
-    done
+    # echo -e "\n Evaluating MI between model representations and their phone labels"
+    # iter_num=0
+    # span=phone
+    # for layer_num in $(seq 0 12); do
+    #     echo $layer_num
+    #     . scripts/get_mi_scores.sh $span $layer_num $iter_num $model_name $data_sample $save_dir_pth
+    # done
 
     echo -e "\n Evaluating CCA between model representations and their mel filterbank features"
     exp_name=cca_mel

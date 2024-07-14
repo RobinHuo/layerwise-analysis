@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import sys
+from argparse import Namespace
 
 import fairseq
 import soundfile as sf
@@ -113,7 +114,7 @@ class ModelLoader:
 
     def fasthubert(self):
         # run module to register task
-        import fairseq.FastHuBERT.task
+        fairseq.utils.import_user_module(Namespace(user_dir=self.pckg_dir))
         encoder, task_cfg = self.fairseq_model_loader()
         return encoder, task_cfg
 

@@ -344,7 +344,18 @@ class FeatExtractor:
         self.fairseq_extractor()
 
     def fasthubert(self):
-        self.fairseq_extractor()
+        with torch.no_grad():
+            local_features = self.encoder.downsample(self.in_data)
+            encoder_out = self.encoder(self.in_data, features_only=True, mask=False)
+        if self.rep_type == "contextualized":
+            for layer_num, layer_rep in enumerate(encoder_out["layer_results"]):
+                self.contextualized_features[layer_num] = (
+                    layer_rep[0].squeeze(1).cpu().numpy()
+                )
+        if self.rep_type == "local":
+            self.local_features = local_features
+        self.n_frames = len(self.in_data.squeeze(0))
+        self.stride_sec = 2**len(self.encoder.cfg.conv_kernel_sizes.split(",")) * 10 / 1000
 
     def transform_rep(self, kernel_size, stride, layer_rep):
         """

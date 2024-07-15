@@ -345,7 +345,7 @@ class FeatExtractor:
 
     def fasthubert(self):
         with torch.no_grad():
-            local_features = self.encoder.downsample(self.in_data)
+            local_features = self.encoder.subsample(self.in_data)
             encoder_out = self.encoder(self.in_data, features_only=True, mask=False)
         if self.rep_type == "contextualized":
             for layer_num, layer_rep in enumerate(encoder_out["layer_results"]):

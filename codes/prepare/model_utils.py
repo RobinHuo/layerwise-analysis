@@ -211,7 +211,15 @@ class DataLoader:
         self.fastvgs()
 
     def fasthubert(self):
-        in_data = self.fairseq_indata()
+        from torchaudio.compliance.kaldi import fbank
+        assert self.audio.ndim == 1
+        in_data = fbank(
+            torch.from_numpy(np.expand_dims(self.audio, 0).astype("float32")),
+            num_mel_bins=80,
+            sample_frequency=self.fs,
+        )
+        if self.task_cfg.normalize:
+            in_data = F.layer_norm(in_data, in_data.shape)
         return in_data
 
 
@@ -291,18 +299,22 @@ class FeatExtractor:
 
     def fairseq_extractor(self):
         with torch.no_grad():
-            in_rep, local_features = self.encoder.feature_extractor(self.in_data)
+            # print(f"DEBUG: in_data {self.in_data.shape}")
+            local_features = [self.encoder.feature_extractor(self.in_data)]
+            # print(f"DEBUG: local_features {local_features}")
             encoder_out = self.encoder(self.in_data, features_only=True, mask=False)
+            # print(f"DEBUG: encoder_out {encoder_out}")
             if self.rep_type == "quantized" and "hubert" not in self.model_name:
                 self.z_discrete, self.indices = self.encoder.quantize(self.in_data)
         if self.rep_type == "contextualized":
             for layer_num, layer_rep in enumerate(encoder_out["layer_results"]):
+                # print(f"DEBUG: layer_rep[{layer_num}] {layer_rep}")
                 self.contextualized_features[layer_num] = (
                     layer_rep[0].squeeze(1).cpu().numpy()
                 )
         if self.rep_type == "local":
             self.local_features = local_features
-        self.n_frames = len(in_rep.transpose(1, 2).squeeze(0))
+        self.n_frames = len(local_features[0].squeeze(0))
         self.stride_sec = 20 / 1000
 
     def wav2vec(self):
@@ -345,17 +357,21 @@ class FeatExtractor:
 
     def fasthubert(self):
         with torch.no_grad():
-            local_features = self.encoder.subsample(self.in_data)
-            encoder_out = self.encoder(self.in_data, features_only=True, mask=False)
+            if self.rep_type == "local":
+                src_lengths = torch.full((self.in_data.shape[0],), self.in_data.shape[1], device=self.device)
+                self.local_features = self.encoder.subsample(self.in_data.unsqueeze(0), src_lengths=src_lengths)
+            encoder_out = self.encoder(self.in_data.unsqueeze(0), features_only=True, mask=False)
         if self.rep_type == "contextualized":
             for layer_num, layer_rep in enumerate(encoder_out["layer_results"]):
                 self.contextualized_features[layer_num] = (
                     layer_rep[0].squeeze(1).cpu().numpy()
                 )
-        if self.rep_type == "local":
-            self.local_features = local_features
         self.n_frames = len(self.in_data.squeeze(0))
-        self.stride_sec = 2**len(self.encoder.cfg.conv_kernel_sizes.split(",")) * 10 / 1000
+        try:
+            nconv = len(self.encoder.cfg.conv_kernel_sizes.split(","))
+        except AttributeError:
+            nconv = 2
+        self.stride_sec = 2**nconv * 10 / 1000
 
     def transform_rep(self, kernel_size, stride, layer_rep):
         """
@@ -365,7 +381,7 @@ class FeatExtractor:
         layer_rep = torch.transpose(layer_rep, 1, 0)  # 512 x 1 x num_frames
         weight = (
             torch.from_numpy(np.ones([1, 1, kernel_size]) / kernel_size)
-            .type(torch.cuda.FloatTensor)
+            .type(torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor)
             .to(self.device)
         )
         transformed_rep = F.conv1d(layer_rep, weight, stride=stride)
@@ -403,7 +419,7 @@ class FeatExtractor:
                 num_samples_rest = transformed_rep.shape[0]
         fbank = (
             torch.from_numpy(self.fbank)
-            .type(torch.cuda.FloatTensor)
+            .type(torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor)
             .to(self.device)
             .unsqueeze(0)
         )
@@ -411,10 +427,13 @@ class FeatExtractor:
             kernel, stride = 1, 4
             num_samples_last = self.contextualized_features[0].shape[0]
         else:
-            truncated_fbank_lst.append(self.fbank.T[:num_samples_rest])
-            assert num_samples_rest < (self.fbank.shape[1] + 1)
-            kernel = PER_LAYER_TRANSFORM_DCT[len(self.local_features)]["kernel"]
-            stride = PER_LAYER_TRANSFORM_DCT[len(self.local_features)]["stride"]
+            if layer_num > 1:
+                truncated_fbank_lst.append(self.fbank.T[:num_samples_rest])
+                assert num_samples_rest < (self.fbank.shape[1] + 1)
+            # kernel = PER_LAYER_TRANSFORM_DCT[len(self.local_features)]["kernel"]
+            # stride = PER_LAYER_TRANSFORM_DCT[len(self.local_features)]["stride"]
+            kernel = PER_LAYER_TRANSFORM_DCT[7]["kernel"]
+            stride = PER_LAYER_TRANSFORM_DCT[7]["stride"]
         transformed_fbank = self.transform_rep(kernel, stride, fbank)
         assert num_samples_last < (transformed_fbank.shape[0] + 1)
         transformed_fbank_lst.append(transformed_fbank[:num_samples_last])

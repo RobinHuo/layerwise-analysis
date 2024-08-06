@@ -10,6 +10,8 @@ model_type=pretrained
 # setting steps to skip the steps previously done 
 steps=2
 
+echo "Run started at $(date)"
+
 # step 1: Preparing ailgnment data
 if [ $steps -le 1 ]; then
     echo "going to step 1"
@@ -93,3 +95,5 @@ if [ $steps -le 4 ]; then
     span=word
     . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
 fi
+
+echo "Run finished at $(date)"

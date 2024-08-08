@@ -5,6 +5,7 @@ model/
 plots/
 results/
 save/
+logs/
 
 **/*.ipynb
 **/__pycache__/

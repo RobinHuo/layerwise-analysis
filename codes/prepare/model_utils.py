@@ -300,12 +300,16 @@ class FeatExtractor:
     def fairseq_extractor(self):
         with torch.no_grad():
             in_rep, local_features = self.encoder.feature_extractor(self.in_data)
+            transf_inp = in_rep.clone().transpose(1, 2)
+            if getattr(self.encoder, "post_extract_proj", None) is not None:
+                transf_inp = self.encoder.post_extract_proj(transf_inp)
             encoder_out = self.encoder(self.in_data, features_only=True, mask=False)
             if self.rep_type == "quantized" and "hubert" not in self.model_name:
                 self.z_discrete, self.indices = self.encoder.quantize(self.in_data)
         if self.rep_type == "contextualized":
+            self.contextualized_features[0] = transf_inp.squeeze(0).cpu().numpy()
             for layer_num, layer_rep in enumerate(encoder_out["layer_results"]):
-                self.contextualized_features[layer_num] = (
+                self.contextualized_features[layer_num + 1] = (
                     layer_rep[0].squeeze(1).cpu().numpy()
                 )
         if self.rep_type == "local":

@@ -124,7 +124,7 @@ class getCCA:
             all_fbank_downsampled = np.load(
                 os.path.join(self.fbank_dir, "all_features_downsampled.npy")
             )
-        layer_start = 1
+        layer_start = 0
 
         for layer_id in range(1, self.num_conv_layers + 1):
             if self.get_score_flag(f"C{layer_id}"):

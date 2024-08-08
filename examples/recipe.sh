@@ -8,19 +8,21 @@ model_name=hubert_small
 model_type=pretrained
 
 # setting steps to skip the steps previously done 
-steps=2
+steps=${RECIPE_STEP:-2}
 
 echo "Run started at $(date)"
 
 # step 1: Preparing ailgnment data
 if [ $steps -le 1 ]; then
     echo "going to step 1"
+    date
     . scripts/prepare_alignment_files.sh librispeech $path_to_librispeech_data $alignment_data_dir
 fi
 
 # step 2: Creating random data samples for analysis and extracting represenatations
 if [ $steps -le 2 ]; then
     echo "going to step 2"
+    date
 
     # Extracting frame-level representations
     rep_type_arr=("local" "contextualized")
@@ -66,12 +68,14 @@ fi
 # step 3: Save on-hot embeddings to be further used in cca-phone experiment
 if [ $steps -le 3 ]; then
     echo "going to step 3"
+    date
     . scripts/save_embeddings.sh $save_dir_pth $alignment_data_dir one-hot
 fi
 
 # step 4: Example experiments evaluating property content
 if [ $steps -le 4 ]; then
     echo "going to step 4"
+    date
     # echo -e "\n Evaluating MI between model representations and their phone labels"
     # iter_num=0
     # span=phone
@@ -93,6 +97,11 @@ if [ $steps -le 4 ]; then
     echo -e "\n Evaluating CCA between word-level representations and the corresponding one-hot embeddings"
     exp_name=cca_word
     span=word
+    . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
+
+    echo -e "\n Evaluating CCA between model representations and (projected) local representations"
+    exp_name=cca_intra
+    span=frame
     . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
 fi
 

@@ -6,6 +6,7 @@ plots/
 results/
 save/
 logs/
+env/
 
 **/*.ipynb
 **/__pycache__/

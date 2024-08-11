@@ -24,6 +24,8 @@ class ModelLoader:
         self.model_type = model_type
         self.pckg_dir = pckg_dir
         self.dict_fn = dict_fn
+        if self.pckg_dir:
+            fairseq.utils.import_user_module(Namespace(user_dir=self.pckg_dir))
 
     def wavlm(self):
         sys.path.insert(0, self.pckg_dir)

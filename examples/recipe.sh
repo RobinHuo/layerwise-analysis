@@ -99,10 +99,10 @@ if [ $steps -le 4 ]; then
     span=word
     . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
 
-    echo -e "\n Evaluating CCA between model representations and (projected) local representations"
-    exp_name=cca_intra
-    span=frame
-    . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
+    # echo -e "\n Evaluating CCA between model representations and (projected) local representations"
+    # exp_name=cca_intra
+    # span=frame
+    # . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
 fi
 
 echo "Run finished at $(date)"

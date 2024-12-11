@@ -37,7 +37,7 @@ if [ $steps -le 2 ]; then
     # Extracting phone-level representations
     rep_type=contextualized
     span=phone
-    dataset_split_arr=("dev-clean"  "train-clean")
+    dataset_split_arr=("dev-clean")
     for dataset_split in ${dataset_split_arr[*]}; do
         echo $dataset_split
         . scripts/create_librispeech_data_samples.sh $data_sample $path_to_librispeech_data $alignment_data_dir $dataset_split $span
@@ -52,7 +52,7 @@ if [ $steps -le 2 ]; then
     # Extracting word-level representations
     rep_type=contextualized
     span=word
-    dataset_split_arr=("dev-clean"  "train-clean")
+    dataset_split_arr=("dev-clean")
     for dataset_split in ${dataset_split_arr[*]}; do
         echo $dataset_split
         . scripts/create_librispeech_data_samples.sh $data_sample $path_to_librispeech_data $alignment_data_dir $dataset_split $span
@@ -84,10 +84,10 @@ if [ $steps -le 4 ]; then
     #     . scripts/get_mi_scores.sh $span $layer_num $iter_num $model_name $data_sample $save_dir_pth
     # done
 
-    echo -e "\n Evaluating CCA between model representations and their mel filterbank features"
-    exp_name=cca_mel
-    span=frame
-    . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
+    # echo -e "\n Evaluating CCA between model representations and their mel filterbank features"
+    # exp_name=cca_mel
+    # span=frame
+    # . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
 
     echo -e "\n Evaluating CCA between phone-level representations and the corresponding one-hot embeddings"
     exp_name=cca_phone

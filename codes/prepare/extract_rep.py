@@ -87,6 +87,8 @@ def save_rep(
             offset=offset,
             mean_pooling=mean_pooling,
         )
+        if os.getenv("RH_MASK") and time_stamp_lst:
+            extract_obj.construct_mask(time_stamp_lst)
         getattr(extract_obj, model_name.split("_")[0])()
         if rep_type == "local":
             extract_obj.extract_local_rep(

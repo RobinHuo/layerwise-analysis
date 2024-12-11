@@ -1,3 +1,5 @@
+import functools
+import math
 import numpy as np
 import os
 import sys
@@ -258,6 +260,9 @@ class FeatExtractor:
         self.local_features = {}
         self.utt_id = utt_id
 
+        self.stride_sec = 20 / 1000
+        self.mask = None
+
     def avhubert(self):
         # model only has a projection layer before the transformer module
         with torch.no_grad():
@@ -305,7 +310,7 @@ class FeatExtractor:
             transf_inp = in_rep.clone().transpose(1, 2)
             if getattr(self.encoder, "post_extract_proj", None) is not None:
                 transf_inp = self.encoder.post_extract_proj(transf_inp)
-            encoder_out = self.encoder(self.in_data, features_only=True, mask=False)
+            encoder_out = self.encoder(self.in_data, features_only=True, mask=self.mask)
             if self.rep_type == "quantized" and "hubert" not in self.model_name:
                 self.z_discrete, self.indices = self.encoder.quantize(self.in_data)
         if self.rep_type == "contextualized":
@@ -374,6 +379,16 @@ class FeatExtractor:
         except AttributeError:
             nconv = 2
         self.stride_sec = 2**nconv * 10 / 1000
+
+    def construct_mask(self, timestamps):
+        ds_factor = 16000 / (1 / self.stride_sec)
+        assert self.in_data.shape[0] == 1
+        mask = torch.zeros((1, math.ceil(self.in_data.shape[1] / ds_factor)), dtype=torch.bool, device=self.device)
+        for start, end, _ in timestamps:
+            idx = self.get_segment_idx(start, end, mask.shape[1], offset=0)
+            mask[0, idx] = True
+        self.mask = mask
+        return mask
 
     def transform_rep(self, kernel_size, stride, layer_rep):
         """
@@ -444,13 +459,14 @@ class FeatExtractor:
             rep_array_masked = np.expand_dims(np.mean(rep_array_masked, 0), 0)
         rep_dct[key].append(rep_array_masked)
 
-    def get_segment_idx(self, start_time, end_time, len_utt):
+    def get_segment_idx(self, start_time, end_time, len_utt, offset = None):
         start_id = int(np.floor(float(start_time) / self.stride_sec))
         end_id = int(np.ceil(float(end_time) / self.stride_sec))
-        if self.offset:
-            offset = int(np.floor((end_id - start_id + 1) / 3))
-        else:
-            offset = 0
+        if offset is None:
+            if self.offset:
+                offset = int(np.floor((end_id - start_id + 1) / 3))
+            else:
+                offset = 0
         start_id += offset
         end_id -= offset
         if end_id == start_id:

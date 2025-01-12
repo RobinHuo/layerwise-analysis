@@ -24,6 +24,14 @@ class LibrispeechAlign:
         self.data_dir = data_dir
 
         token_lst_dct = self.read_data()
+        rh_inject_speakers = os.getenv("RH_INJECT_SPEAKERS")
+        if rh_inject_speakers:
+            token_lst_dct["speaker"] = list(
+                map(
+                    lambda s: s.replace("\t", " "),
+                    filter(None, read_lst(rh_inject_speakers))
+                )
+            )
         self.get_token_alignment_ordered_lst(token_lst_dct, data_dir, dataset_split)
         token_alignment_dct = self.get_token_alignment_dct(token_lst_dct)
         for key, value in token_alignment_dct.items():
@@ -31,6 +39,11 @@ class LibrispeechAlign:
                 os.path.join(data_dir, f"alignment_{key}_{dataset_split}.json"), value
             )
 
+        if rh_inject_speakers and "train" not in dataset_split:
+            for key in ["speaker"]:
+                count_fn[key] = os.path.join(data_dir, f"{key}_count.json")
+                token_lst_fn[key] = os.path.join(data_dir, f"{key}.lst")
+            self.update_tokens(count_fn, token_lst_fn, token_alignment_dct)
         if "train" in dataset_split:
             count_fn, token_lst_fn = {}, {}
             for key in ["phone", "word"]:

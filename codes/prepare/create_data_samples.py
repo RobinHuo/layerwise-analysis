@@ -140,6 +140,13 @@ class tokenLevelSamples:
         # wrd_lst = list(set(wrd_lst) - set(english_stop_words))[:num_words]
         self.sample_tokens(wrd_lst[:num_words], min_cnt, max_cnt, alignment_dct)
 
+    def sample_speaker_alignments(self, num_speakers=40):
+        spk_list = read_lst(os.path.join(self.data_dir, "speaker.lst"))
+        alignment_dct = load_dct(
+            os.path.join(self.data_dir, f"alignment_speaker_{self.data_split}.json")
+        )
+        self.sample_tokens(spk_list, 500, 500, alignment_dct)
+
 
 class AllWrdSegments:
     def __init__(

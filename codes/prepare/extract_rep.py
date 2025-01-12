@@ -106,7 +106,7 @@ def save_rep(
                 discrete_indices_dct,
             )
 
-    if span in ["phone", "word"]:
+    if span in ["phone", "word", "speaker"]:
         write_to_file("\n".join(label_lst), label_lst_fn)
 
     if rep_type != "quantized":

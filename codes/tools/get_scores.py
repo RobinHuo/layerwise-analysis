@@ -57,6 +57,10 @@ class getCCA:
             assert span == "word"
         elif exp_name == "cca_phone":
             assert span == "phone"
+        elif exp_name == "cca_speaker":
+            assert span == "speaker"
+        else:
+            assert False, "Unsupported exp_name!"
         self.span = span
         self.exp_name = exp_name
         self.mean_score = mean_score
@@ -253,6 +257,9 @@ class getCCA:
         self.cca_embed()
 
     def cca_agwe(self):
+        self.cca_embed()
+
+    def cca_speaker(self):
         self.cca_embed()
 
 

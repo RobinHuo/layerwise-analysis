@@ -33,4 +33,5 @@ elif [ "$embed_type" = "one-hot" ]; then
     echo -e "\n\nSaving one-hot embeddings for phone and word segments"
     python codes/prepare/read_librispeech_alignments.py one_hot word `realpath $alignment_dir` `realpath $embedding_dir` 500
     python codes/prepare/read_librispeech_alignments.py one_hot phone `realpath $alignment_dir` `realpath $embedding_dir` -1
+    python codes/prepare/read_librispeech_alignments.py one_hot speaker `realpath $alignment_dir` `realpath $embedding_dir` -1
 fi

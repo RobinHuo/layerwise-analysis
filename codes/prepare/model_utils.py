@@ -471,7 +471,7 @@ class FeatExtractor:
         end_id -= offset
         if end_id == start_id:
             end_id += 1
-        if end_id == len_utt + 1:
+        if end_id > len_utt:
             end_id = len_utt
         assert end_id > start_id
 

@@ -8,7 +8,7 @@ model_name=hubert_small
 model_type=pretrained
 
 # setting steps to skip the steps previously done 
-steps=${RECIPE_STEP:-2}
+steps=${RECIPE_STEP:-1}
 
 echo "Run started at $(date)"
 
@@ -23,6 +23,8 @@ fi
 if [ $steps -le 2 ]; then
     echo "going to step 2"
     date
+
+    echo "Using checkpoint $(realpath $ckpt_dir/$model_name.pt)"
 
     # Extracting frame-level representations
     rep_type_arr=("local" "contextualized")
@@ -52,6 +54,21 @@ if [ $steps -le 2 ]; then
     # Extracting word-level representations
     rep_type=contextualized
     span=word
+    dataset_split_arr=("dev-clean")
+    for dataset_split in ${dataset_split_arr[*]}; do
+        echo $dataset_split
+        . scripts/create_librispeech_data_samples.sh $data_sample $path_to_librispeech_data $alignment_data_dir $dataset_split $span
+        num_samples=`ls data_samples/librispeech/${span}_level/${dataset_split}_segments_sample${data_sample}_*.json | wc -l`
+        num_samples=`expr $num_samples - 1`
+        for subset_id in $(seq 0 $num_samples); do
+            echo $subset_id
+            . scripts/extract_rep.sh $model_name $ckpt_dir $data_sample $rep_type $span $subset_id $dataset_split $save_dir_pth $pckg_dir
+        done
+    done
+
+    # Extracting speaker (utterance) level representations
+    rep_type=contextualized
+    span=speaker
     dataset_split_arr=("dev-clean")
     for dataset_split in ${dataset_split_arr[*]}; do
         echo $dataset_split
@@ -97,6 +114,11 @@ if [ $steps -le 4 ]; then
     echo -e "\n Evaluating CCA between word-level representations and the corresponding one-hot embeddings"
     exp_name=cca_word
     span=word
+    . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
+
+    echo -e "\n Evaluating CCA between speaker (utterance) level representations and the corresponding one-hot embeddings"
+    exp_name=cca_speaker
+    span=speaker
     . scripts/get_cca_scores.sh $model_name $data_sample $exp_name $span $save_dir_pth
 
     # echo -e "\n Evaluating CCA between model representations and (projected) local representations"

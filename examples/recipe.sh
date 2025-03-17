@@ -3,12 +3,12 @@ ckpt_dir=$2
 pckg_dir=$3
 save_dir_pth=save
 alignment_data_dir="${ALIGNMENTS:-data_samples/librispeech/alignments}"
-data_sample=1
-model_name=hubert_small
+data_sample="${DATA_SAMPLE:-1}"
+model_name="${MODEL_NAME:-hubert_small}"
 model_type=pretrained
 
 # setting steps to skip the steps previously done 
-steps=${RECIPE_STEP:-1}
+steps=${RECIPE_STEP:-2}
 
 echo "Run started at $(date)"
 
